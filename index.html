@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arivumadhi D R — Game Designer &amp; Developer Portfolio</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Orbitron, JetBrains Mono, Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Orbitron:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            cyberdark: '#030712',
+            hudbg: 'rgba(7, 16, 34, 0.88)',
+            hudborder: 'rgba(0, 240, 255, 0.28)',
+            cyan: {
+              400: '#00f0ff',
+              500: '#00d0e0',
+              900: '#002330',
+            },
+            neonpink: {
+              400: '#ff0055',
+              500: '#e6004c',
+            },
+            gold: {
+              400: '#ffd700',
+              500: '#e6c200',
+            },
+            cyberblue: {
+              400: '#3a86ef',
+            },
+            neongreen: '#00ff88',
+          },
+          fontFamily: {
+            hud: ['Orbitron', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #030712;
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Fullscreen Interactive Canvas Background */
+    #bgCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Chamfered Sci-Fi HUD Container Box */
+    .hud-box {
+      background: rgba(7, 16, 34, 0.88);
+      border: 1px solid rgba(0, 240, 255, 0.28);
+      backdrop-filter: blur(14px);
+      position: relative;
+      clip-path: polygon(
+        0 0, 
+        calc(100% - 16px) 0, 
+        100% 16px, 
+        100% 100%, 
+        16px 100%, 
+        0 calc(100% - 16px)
+      );
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .hud-box:hover {
+      border-color: rgba(0, 240, 255, 0.65);
+      box-shadow: 0 0 22px rgba(0, 240, 255, 0.18);
+    }
+
+    /* Chamfered Gold Button Cutout */
+    .btn-gold-chamfer {
+      background: linear-gradient(135deg, #ffd700 0%, #e6b800 100%);
+      color: #030712;
+      font-family: 'Orbitron', sans-serif;
+      clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+      transition: all 0.25s ease;
+    }
+    .btn-gold-chamfer:hover {
+      background: linear-gradient(135deg, #ffe033 0%, #ffd700 100%);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      transform: translateY(-2px);
+    }
+
+    /* HUD Corner Cut Markers */
+    .corner-tl {
+      position: absolute;
+      top: 0; left: 0;
+      width: 8px; height: 8px;
+      border-top: 2px solid #00f0ff;
+      border-left: 2px solid #00f0ff;
+    }
+    .corner-br {
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 8px; height: 8px;
+      border-bottom: 2px solid #00f0ff;
+      border-right: 2px solid #00f0ff;
+    }
+
+    /* Text Glows */
+    .glow-cyan { text-shadow: 0 0 12px rgba(0, 240, 255, 0.75); }
+    .glow-pink { text-shadow: 0 0 12px rgba(255, 0, 85, 0.75); }
+    .glow-gold { text-shadow: 0 0 12px rgba(255, 215, 0, 0.75); }
+
+    /* Custom Sleek Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #030712; }
+    ::-webkit-scrollbar-thumb { background: #00f0ff; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ff0055; }
+
+    /* Scroll Intersection Animations */
+    .reveal-section {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Pulse Dot Keyframe */
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.25); }
+    }
+    .pulse-status {
+      animation: pulseDot 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="relative min-h-screen text-slate-100 selection:bg-cyan-400 selection:text-black">
+
+<!-- Interactive Space Grid & Particle Canvas -->
+<canvas id="bgCanvas"></canvas>
+
+<!-- STICKY HUD HEADER -->
+<header class="sticky top-0 z-50 bg-cyberdark/90 backdrop-blur-md border-b border-cyan-400/30 px-4 sm:px-8 py-3.5">
+  <div class="max-w-6xl mx-auto flex items-center justify-between">
+    
+    <!-- Logo -->
+    <a href="#" class="font-hud text-base sm:text-lg font-extrabold text-white tracking-widest flex items-center gap-2 group">
+      <span class="w-3.5 h-3.5 bg-cyan-400 rounded-sm group-hover:rotate-45 transition-transform duration-300 shadow-[0_0_12px_#00f0ff]"></span>
+      <span class="text-cyan-400">ARIVUMADHI<span class="text-neonpink-400">.EXE</span></span>
+    </a>
+
+    <!-- Desktop Navigation Links -->
+    <nav class="hidden md:flex items-center gap-8 font-mono text-xs font-semibold tracking-wider">
+      <a href="#about" class="text-slate-300 hover:text-cyan-400 transition-colors">[01] ABOUT</a>
+      <a href="#skills" class="text-slate-300 hover:text-cyan-400 transition-colors">[02] SKILLS</a>
+      <a href="#quests" class="text-slate-300 hover:text-cyan-400 transition-colors">[03] WORKS</a>
+      <a href="#contact" class="text-slate-300 hover:text-cyan-400 transition-colors">[04] CONTACT</a>
+    </nav>
+
+    <!-- Header Action Button -->
+    <div class="flex items-center gap-3">
+      <button id="openEnquiryBtn" class="btn-gold-chamfer px-5 py-2 text-xs font-bold flex items-center gap-2">
+        <i class="fa-solid fa-briefcase"></i>
+        <span>HIRE ME</span>
+      </button>
+
+      <!-- Mobile Hamburger Button -->
+      <button id="mobileNavBtn" class="md:hidden p-2 text-cyan-400 border border-cyan-400/40 rounded bg-slate-900/80">
+        <i class="fa-solid fa-bars text-lg"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Collapsible Menu -->
+  <div id="mobileMenu" class="hidden md:hidden mt-3 pt-3 border-t border-cyan-400/20 flex flex-col gap-2 font-mono text-xs">
+    <a href="#about" class="text-slate-300 hover:text-cyan-400 py-1.5">[01] ABOUT</a>
+    <a href="#skills" class="text-slate-300 hover:text-cyan-400 py-1.5">[02] SKILLS</a>
+    <a href="#quests" class="text-slate-300 hover:text-cyan-400 py-1.5">[03] WORKS</a>
+    <a href="#contact" class="text-slate-300 hover:text-cyan-400 py-1.5">[04] CONTACT</a>
+  </div>
+</header>
+
+<main class="relative z-10 max-w-6xl mx-auto px-4 sm:px-8 space-y-24 py-10">
+
+  <!-- HERO SECTION -->
+  <section id="hero" class="pt-4 scroll-mt-24 space-y-6">
+    
+    <!-- Status Badge -->
+    <div class="inline-flex items-center gap-2.5 bg-slate-900/90 border border-neongreen/40 px-4 py-1.5 rounded-full text-xs font-mono text-neongreen shadow-[0_0_15px_rgba(0,255,136,0.15)]">
+      <span class="w-2.5 h-2.5 rounded-full bg-neongreen pulse-status"></span>
+      <span class="font-bold tracking-wider">SYSTEM STATUS: READY TO BUILD</span>
+    </div>
+
+    <!-- Main Headline -->
+    <div class="space-y-4 max-w-4xl">
+      <h1 class="font-hud text-3xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
+        Creating digital adventures with <br class="hidden sm:inline">
+        <span class="text-cyan-400 glow-cyan">code</span> &amp; 
+        <span class="text-neonpink-400 glow-pink">creativity.</span>
+      </h1>
+
+      <p class="text-slate-300 text-base sm:text-lg font-sans max-w-2xl leading-relaxed">
+        Hello! I am <strong class="text-white">Arivumadhi D R</strong>, a Grade 11 student passionate about game development, system mechanics, spatial design, and interactive gameplay loops.
+      </p>
+    </div>
+
+    <!-- Animated Terminal Box -->
+    <div class="max-w-xl hud-box p-4 flex items-center gap-3 font-mono text-xs sm:text-sm text-slate-300 border-l-4 border-l-cyan-400">
+      <span class="text-neongreen font-bold">&gt;</span>
+      <span id="typewriterOutput" class="text-cyan-300 font-semibold min-h-[22px] flex items-center"></span>
+      <span class="w-2 h-4 bg-cyan-400 inline-block animate-pulse"></span>
+    </div>
+
+    <!-- Hero CTA Buttons -->
+    <div class="flex flex-wrap items-center gap-4 pt-2 font-mono text-xs">
+      <a href="#quests" class="hud-box px-6 py-3.5 bg-cyan-400/10 border-cyan-400/60 hover:bg-cyan-400 hover:text-cyberdark text-cyan-300 font-bold transition-all flex items-center gap-2 shadow-[0_0_16px_rgba(0,240,255,0.25)]">
+        <i class="fa-solid fa-layer-group"></i> VIEW PORTFOLIO
+      </a>
+      <a href="#contact" class="hud-box px-6 py-3.5 border-slate-700 hover:border-cyan-400 text-slate-300 hover:text-white font-bold transition-all flex items-center gap-2">
+        <i class="fa-solid fa-paper-plane"></i> GET IN TOUCH
+      </a>
+    </div>
+
+  </section>
+
+  <!-- [01] ABOUT SECTION -->
+  <section id="about" class="scroll-mt-24 space-y-8 reveal-section">
+    
+    <div class="flex items-center gap-3 border-b border-cyan-400/25 pb-3">
+      <span class="font-mono text-xs text-cyan-400 bg-cyan-400/10 border border-cyan-400/30 px-2.5 py-0.5 rounded font-bold">[01]</span>
+      <h2 class="font-hud text-2xl sm:text-3xl font-bold text-white tracking-wide">ABOUT THE DEVELOPER</h2>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      
+      <!-- Profile Card Frame -->
+      <div class="lg:col-span-5 flex justify-center">
+        <div class="hud-box p-5 w-full max-w-sm text-center space-y-4">
+          <div class="corner-tl"></div>
+          <div class="corner-br"></div>
+
+          <!-- Profile Picture Holder with Image Fallback -->
+          <div class="relative w-48 h-48 mx-auto rounded border-2 border-cyan-400/50 p-1.5 bg-slate-900 overflow-hidden group">
+            <img 
+              src="arivumadhi_profile.jpg" 
+              alt="Arivumadhi D R" 
+              class="w-full h-full object-cover rounded"
+              onerror="this.onerror=null; this.classList.add('hidden'); document.getElementById('avatarFallback').classList.remove('hidden');"
+            />
+            
+            <!-- Fallback SVG Avatar if Image isn't found -->
+            <div id="avatarFallback" class="hidden w-full h-full bg-gradient-to-br from-cyan-900/60 via-slate-900 to-neonpink-900/60 rounded flex flex-col items-center justify-center text-cyan-400 gap-2">
+              <i class="fa-solid fa-user-gear text-5xl text-cyan-400 group-hover:scale-110 transition-transform duration-300"></i>
+              <span class="font-mono text-[10px] text-slate-400 uppercase tracking-widest">DEV_PROFILE_IMG</span>
+            </div>
+
+            <!-- Sleek Corner Highlights -->
+            <div class="absolute inset-x-0 h-0.5 bg-cyan-400/70 shadow-[0_0_10px_#00f0ff] top-1/2"></div>
+          </div>
+
+          <div class="space-y-1">
+            <h3 class="font-hud font-bold text-xl text-white tracking-wide">ARIVUMADHI D R</h3>
+            <p class="font-mono text-xs text-cyan-400 font-semibold">CLASS: GAME DEVELOPER &amp; DESIGNER</p>
+          </div>
+
+          <div class="font-mono text-[11px] text-slate-400 border-t border-slate-800/80 pt-3 space-y-1.5 text-left">
+            <div class="flex justify-between">
+              <span class="text-slate-500">ACADEMICS:</span> 
+              <span class="text-slate-200 font-bold">GRADE 11</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">LOCATION:</span> 
+              <span class="text-slate-200">INDIA</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">FOCUS:</span> 
+              <span class="text-neongreen font-semibold">MECHANICS &amp; LEVEL FLOW</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bio & Quick Stats -->
+      <div class="lg:col-span-7 space-y-6">
+        <div class="hud-box p-6 space-y-4">
+          <h3 class="font-hud text-lg font-bold text-cyan-400 flex items-center gap-2">
+            <i class="fa-solid fa-terminal text-xs"></i> Player Bio &amp; Goals
+          </h3>
+          <p class="text-slate-300 leading-relaxed text-sm sm:text-base font-sans">
+            Driven by a curiosity for how games entertain and engage players, I specialize in scripting player physics, building combat frameworks, and mapping out intuitive level environments.
+          </p>
+          <p class="text-slate-400 leading-relaxed text-sm font-sans">
+            Currently in Grade 11, I balance my studies with hands-on game design, continually sharpening my logic using tools like Unity, Unreal Engine, C#, and Blender.
+          </p>
+        </div>
+
+        <!-- Stat Counters -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono">
+          <div class="hud-box p-4 border-cyan-400/40 text-center space-y-1">
+            <div class="text-xs text-slate-400 uppercase">ACADEMIC LEVEL</div>
+            <div class="text-xl font-bold text-cyan-400 font-hud">11th Grade</div>
+          </div>
+
+          <div class="hud-box p-4 border-neonpink-400/40 text-center space-y-1">
+            <div class="text-xs text-slate-400 uppercase">PROTOTYPES</div>
+            <div class="text-xl font-bold text-neonpink-400 font-hud">3+ BUILT</div>
+          </div>
+
+          <div class="hud-box p-4 border-gold-400/40 text-center space-y-1">
+            <div class="text-xs text-slate-400 uppercase">DEDICATION</div>
+            <div class="text-xl font-bold text-gold-400 font-hud">100%</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- [02] SKILLS SECTION -->
+  <section id="skills" class="scroll-mt-24 space-y-8 reveal-section">
+    
+    <div class="flex items-center gap-3 border-b border-cyan-400/25 pb-3">
+      <span class="font-mono text-xs text-neonpink-400 bg-neonpink-400/10 border border-neonpink-400/30 px-2.5 py-0.5 rounded font-bold">[02]</span>
+      <h2 class="font-hud text-2xl sm:text-3xl font-bold text-white tracking-wide">SKILLS &amp; PROFICIENCY MATRIX</h2>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <!-- Interactive XP Bars -->
+      <div class="hud-box p-6 space-y-6">
+        <h3 class="font-hud text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-cyan-400 text-xs"></i> XP Skill Gauges
+        </h3>
+
+        <div class="space-y-5 font-mono text-xs">
+          
+          <!-- Skill 1 -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-200 font-semibold">Game Mechanics &amp; Systems</span>
+              <span class="text-cyan-400 font-bold">60% XP</span>
+            </div>
+            <div class="w-full bg-slate-900/90 h-3.5 rounded border border-slate-800 p-0.5 overflow-hidden">
+              <div class="skill-bar bg-gradient-to-r from-cyan-500 to-cyan-400 h-full rounded shadow-[0_0_10px_#00f0ff]" style="width: 0%" data-target="60%"></div>
+            </div>
+          </div>
+
+          <!-- Skill 2 -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-200 font-semibold">Level &amp; Spatial Design</span>
+              <span class="text-gold-400 font-bold">50% XP</span>
+            </div>
+            <div class="w-full bg-slate-900/90 h-3.5 rounded border border-slate-800 p-0.5 overflow-hidden">
+              <div class="skill-bar bg-gradient-to-r from-gold-500 to-gold-400 h-full rounded shadow-[0_0_10px_#ffd700]" style="width: 0%" data-target="50%"></div>
+            </div>
+          </div>
+
+          <!-- Skill 3 -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-200 font-semibold">Coding &amp; Scripting (C# / Blueprints)</span>
+              <span class="text-neonpink-400 font-bold">45% XP</span>
+            </div>
+            <div class="w-full bg-slate-900/90 h-3.5 rounded border border-slate-800 p-0.5 overflow-hidden">
+              <div class="skill-bar bg-gradient-to-r from-neonpink-500 to-neonpink-400 h-full rounded shadow-[0_0_10px_#ff0055]" style="width: 0%" data-target="45%"></div>
+            </div>
+          </div>
+
+          <!-- Skill 4 -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-200 font-semibold">Problem Solving &amp; Debugging</span>
+              <span class="text-neongreen font-bold">80% XP</span>
+            </div>
+            <div class="w-full bg-slate-900/90 h-3.5 rounded border border-slate-800 p-0.5 overflow-hidden">
+              <div class="skill-bar bg-gradient-to-r from-emerald-500 to-neongreen h-full rounded shadow-[0_0_10px_#00ff88]" style="width: 0%" data-target="80%"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tech Stack Badges Box -->
+      <div class="hud-box p-6 space-y-6">
+        <h3 class="font-hud text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-cubes text-neonpink-400 text-xs"></i> Engines &amp; Technologies
+        </h3>
+
+        <div class="flex flex-wrap gap-2.5 font-mono text-xs">
+          <span class="px-3.5 py-2 bg-slate-900/90 border border-cyan-400/40 text-cyan-300 rounded flex items-center gap-2">
+            <i class="fa-solid fa-cube text-cyan-400 text-[11px]"></i> Unity Engine
+          </span>
+
+          <span class="px-3.5 py-2 bg-slate-900/90 border border-cyan-400/40 text-cyan-300 rounded flex items-center gap-2">
+            <i class="fa-solid fa-play text-cyan-400 text-[11px]"></i> Unreal Engine
+          </span>
+
+          <span class="px-3.5 py-2 bg-slate-900/90 border border-neonpink-400/40 text-neonpink-400 rounded flex items-center gap-2">
+            <i class="fa-solid fa-code text-[11px]"></i> C#
+          </span>
+
+          <span class="px-3.5 py-2 bg-slate-900/90 border border-neonpink-400/40 text-neonpink-400 rounded flex items-center gap-2">
+            <i class="fa-solid fa-diagram-project text-[11px]"></i> UE Blueprints
+          </span>
+
+          <span class="px-3.5 py-2 bg-slate-900/90 border border-gold-400/40 text-gold-400 rounded flex items-center gap-2">
+            <i class="fa-solid fa-shapes text-[11px]"></i> Blender
+          </span>
+
+          <span class="px-3.5 py-2 bg-slate-900/90 border border-neongreen/40 text-neongreen rounded flex items-center gap-2">
+            <i class="fa-solid fa-atom text-[11px]"></i> Physics Math
+          </span>
+        </div>
+
+        <div class="bg-cyberdark/80 p-4 rounded border border-slate-800 text-xs text-slate-300 font-sans leading-relaxed space-y-2">
+          <div class="font-mono text-cyan-400 font-bold text-[11px]">// CONTINUOUS LEARNING</div>
+          <p>
+            Constantly experimenting with gameplay loops, hitboxes, character controller feel, and environmental lighting to build smooth interactive experiences.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- [03] QUESTS / PROJECTS SECTION -->
+  <section id="quests" class="scroll-mt-24 space-y-8 reveal-section">
+    
+    <div class="flex items-center gap-3 border-b border-cyan-400/25 pb-3">
+      <span class="font-mono text-xs text-gold-400 bg-gold-400/10 border border-gold-400/30 px-2.5 py-0.5 rounded font-bold">[03]</span>
+      <h2 class="font-hud text-2xl sm:text-3xl font-bold text-white tracking-wide">FEATURED QUESTS &amp; PROJECTS</h2>
+    </div>
+
+    <!-- Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Quest 1 -->
+      <div class="hud-box p-6 flex flex-col justify-between space-y-6 group">
+        <div class="corner-tl"></div>
+        <div class="corner-br"></div>
+
+        <div class="space-y-4">
+          <div class="flex justify-between items-center font-mono text-[11px]">
+            <span class="text-neonpink-400 bg-neonpink-400/10 border border-neonpink-400/30 px-2 py-0.5 rounded font-bold">COMBAT SYSTEM</span>
+            <span class="text-slate-500">QUEST_01</span>
+          </div>
+
+          <h3 class="font-hud text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">
+            Action RPG Combat Concept
+          </h3>
+
+          <p class="text-slate-300 text-sm font-sans leading-relaxed">
+            Responsive melee combat flow featuring precision dodge windows, hitboxes, enemy AI reaction states, and hitstop visual feedback.
+          </p>
+
+          <!-- Tech Tags -->
+          <div class="flex flex-wrap gap-1.5 font-mono text-[11px]">
+            <span class="px-2 py-0.5 bg-slate-900 border border-slate-800 text-cyan-300 rounded">C#</span>
+            <span class="px-2 py-0.5 bg-slate-900 border border-slate-800 text-cyan-300 rounded">Unity</span>
+            <span class="px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-400 rounded">Hitboxes</span>
+          </div>
+        </div>
+
+        <button class="openModalBtn font-mono text-xs font-bold text-cyan-400 hover:text-white flex items-center gap-1.5 pt-2 transition-colors"
+          data-title="Action RPG Combat Concept"
+          data-type="Combat Mechanics &amp; AI"
+          data-desc="An experimental combat framework focused on player input responsiveness. Built to test attack cancels, invincibility dodge frames (i-frames), dynamic hitstop effects, and basic enemy state machines."
+          data-tech="Unity Engine, C#, Hitbox Colliders, State Machine"
+          data-points='["Frame-precise attack and dodge windows", "Invincibility dodge frames (i-frames)", "Modular enemy attack pattern behaviors"]'>
+          <span>VIEW DETAILS</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </button>
+      </div>
+
+      <!-- Quest 2 -->
+      <div class="hud-box p-6 flex flex-col justify-between space-y-6 group">
+        <div class="corner-tl"></div>
+        <div class="corner-br"></div>
+
+        <div class="space-y-4">
+          <div class="flex justify-between items-center font-mono text-[11px]">
+            <span class="text-cyan-400 bg-cyan-400/10 border border-cyan-400/30 px-2 py-0.5 rounded font-bold">PHYSICS PUZZLE</span>
+            <span class="text-slate-500">QUEST_02</span>
+          </div>
+
+          <h3 class="font-hud text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">
+            Gravity Shift Platformer
+          </h3>
+
+          <p class="text-slate-300 text-sm font-sans leading-relaxed">
+            Physics-based 2D/3D platformer where players manipulate gravity directions to solve spatial navigation and momentum puzzles.
+          </p>
+
+          <!-- Tech Tags -->
+          <div class="flex flex-wrap gap-1.5 font-mono text-[11px]">
+            <span class="px-2 py-0.5 bg-slate-900 border border-slate-800 text-cyan-300 rounded">Unreal Engine</span>
+            <span class="px-2 py-0.5 bg-slate-900 border border-slate-800 text-cyan-300 rounded">Blueprints</span>
+            <span class="px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-400 rounded">Physics</span>
+          </div>
+        </div>
+
+        <button class="openModalBtn font-mono text-xs font-bold text-cyan-400 hover:text-white flex items-center gap-1.5 pt-2 transition-colors"
+          data-title="Gravity Shift Platformer"
+          data-type="Physics &amp; Spatial Puzzles"
+          data-desc="A puzzle platformer prototype exploring directional gravity manipulation. Players rotate environmental vectors to traverse walls and execute high-speed momentum launches."
+          data-tech="Unreal Engine 5, Visual Blueprints, RigidBody Physics"
+          data-points='["Custom 4-way gravity shifting", "Momentum preservation on vector change", "Level spatial blockout design"]'>
+          <span>VIEW DETAILS</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </button>
+      </div>
+
+      <!-- Quest 3 -->
+      <div class="hud-box p-6 flex flex-col justify-between space-y-6 group">
+        <div class="corner-tl"></div>
+        <div class="corner-br"></div>
+
+        <div class="space-y-4">
+          <div class="flex justify-between items-center font-mono text-[11px]">
+            <span class="text-gold-400 bg-gold-400/10 border border-gold-400/30 px-2 py-0.5 rounded font-bold">LEVEL DESIGN</span>
+            <span class="text-slate-500">QUEST_03</span>
+          </div>
+
+          <h3 class="font-hud text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">
+            Sci-Fi Environment Blockout
+          </h3>
+
+          <p class="text-slate-300 text-sm font-sans leading-relaxed">
+            3D facility level blockout designed to test sightlines, environmental lighting queues, and paced player traversal paths.
+          </p>
+
+          <!-- Tech Tags -->
+          <div class="flex flex-wrap gap-1.5 font-mono text-[11px]">
+            <span class="px-2 py-0.5 bg-slate-900 border border-slate-800 text-cyan-300 rounded">Blender</span>
+            <span class="px-2 py-0.5 bg-slate-900 border border-slate-800 text-cyan-300 rounded">Unreal Engine</span>
+            <span class="px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-400 rounded">Lighting</span>
+          </div>
+        </div>
+
+        <button class="openModalBtn font-mono text-xs font-bold text-cyan-400 hover:text-white flex items-center gap-1.5 pt-2 transition-colors"
+          data-title="Sci-Fi Environment Blockout"
+          data-type="Environment &amp; Spatial Layout"
+          data-desc="3D spatial facility layout testing player guidance using light contrast, modular corridor snapping, and atmospheric audio zones."
+          data-tech="Blender, Unreal Engine 5 Lumen Lighting"
+          data-points='["Modular grid snapping workflow", "Paced visual sightline guidance", "Dynamic trigger-based audio zones"]'>
+          <span>VIEW DETAILS</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- [04] CONTACT SECTION -->
+  <section id="contact" class="scroll-mt-24 space-y-8 reveal-section">
+    
+    <div class="flex items-center gap-3 border-b border-cyan-400/25 pb-3">
+      <span class="font-mono text-xs text-neongreen bg-neongreen/10 border border-neongreen/30 px-2.5 py-0.5 rounded font-bold">[04]</span>
+      <h2 class="font-hud text-2xl sm:text-3xl font-bold text-white tracking-wide">CONTACT CONSOLE</h2>
+    </div>
+
+    <div class="hud-box p-6 sm:p-10 max-w-2xl mx-auto space-y-6 text-center">
+      <div class="corner-tl"></div>
+      <div class="corner-br"></div>
+
+      <div class="w-14 h-14 bg-cyan-400/10 border border-cyan-400/40 text-cyan-400 rounded-full flex items-center justify-center mx-auto text-2xl shadow-[0_0_20px_rgba(0,240,255,0.25)]">
+        <i class="fa-solid fa-envelope-open-text"></i>
+      </div>
+
+      <div class="space-y-2">
+        <h3 class="font-hud text-2xl font-bold text-white">Let's Connect &amp; Collaborate</h3>
+        <p class="text-slate-300 text-sm font-sans max-w-md mx-auto leading-relaxed">
+          Interested in discussing game design, mechanics prototyping, or game jam collaborations? Feel free to reach out directly!
+        </p>
+      </div>
+
+      <!-- Email Copy Box -->
+      <div class="bg-cyberdark p-4 rounded border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs max-w-lg mx-auto">
+        <div class="text-slate-300 flex items-center gap-2">
+          <i class="fa-solid fa-at text-cyan-400"></i>
+          <span class="text-cyan-300 font-bold select-all">arivumadhidr@gmail.com</span>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button id="copyEmail" class="w-full sm:w-auto px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded transition-colors flex items-center justify-center gap-1.5 font-bold">
+            <i class="fa-solid fa-copy text-[10px]"></i> <span id="copyBtnTxt">COPY</span>
+          </button>
+          <a href="mailto:arivumadhidr@gmail.com" class="w-full sm:w-auto px-4 py-2 bg-cyan-400 hover:bg-cyan-300 text-cyberdark font-extrabold rounded transition-colors flex items-center justify-center gap-1">
+            <span>MAIL</span> <i class="fa-solid fa-external-link-alt text-[10px]"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Social Connections -->
+      <div class="pt-4 border-t border-slate-800/80 space-y-3">
+        <div class="font-mono text-xs text-slate-500 tracking-wider">NETWORK PLATFORMS</div>
+        <div class="flex flex-wrap justify-center gap-3 font-mono text-xs">
+          <a href="#" class="px-4 py-2 bg-slate-900/90 border border-slate-800 hover:border-cyan-400 text-slate-300 hover:text-cyan-400 rounded transition-colors flex items-center gap-2">
+            <i class="fa-brands fa-github text-sm"></i> GitHub
+          </a>
+          <a href="#" class="px-4 py-2 bg-slate-900/90 border border-slate-800 hover:border-cyan-400 text-slate-300 hover:text-cyan-400 rounded transition-colors flex items-center gap-2">
+            <i class="fa-brands fa-instagram text-sm"></i> Instagram
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- PROJECT DETAIL MODAL -->
+<div id="questModal" class="fixed inset-0 z-50 hidden bg-cyberdark/90 backdrop-blur-md flex items-center justify-center p-4">
+  <div class="hud-box max-w-xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+    <div class="corner-tl"></div>
+    <div class="corner-br"></div>
+
+    <div class="flex justify-between items-start border-b border-cyan-400/30 pb-3">
+      <div>
+        <div id="modalCategory" class="font-mono text-[11px] text-cyan-400 font-bold uppercase">CATEGORY</div>
+        <h3 id="modalTitle" class="font-hud text-xl font-bold text-white">Project Title</h3>
+      </div>
+      <button id="closeModalBtn" class="font-mono text-cyan-400 hover:text-neonpink-400 text-xl font-bold p-1">
+        ✕
+      </button>
+    </div>
+
+    <div class="space-y-4 font-sans text-sm text-slate-300 leading-relaxed">
+      <p id="modalDescription">Mechanics overview description.</p>
+
+      <div class="space-y-2">
+        <div class="font-mono text-xs text-cyan-400 font-bold uppercase tracking-wider">// MECHANICS HIGHLIGHTS</div>
+        <ul id="modalPointsList" class="list-disc list-inside space-y-1 text-slate-300 text-xs font-mono">
+          <!-- Populated dynamically -->
+        </ul>
+      </div>
+
+      <div class="bg-cyberdark/90 p-3 rounded border border-slate-800 font-mono text-xs space-y-1">
+        <div class="text-gold-400 font-bold">TECH / TOOLS USED:</div>
+        <div id="modalTechStack" class="text-slate-300">Unity Engine, C#</div>
+      </div>
+    </div>
+
+    <div class="flex justify-end pt-2 border-t border-slate-800">
+      <button id="closeModalBottomBtn" class="font-mono text-xs font-bold px-5 py-2.5 bg-cyan-400 text-cyberdark rounded hover:bg-cyan-300 transition-colors">
+        CLOSE WINDOW
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ENQUIRY MODAL -->
+<div id="enquiryModal" class="fixed inset-0 z-50 hidden bg-cyberdark/90 backdrop-blur-md flex items-center justify-center p-4">
+  <div class="hud-box max-w-md w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+    <div class="corner-tl"></div>
+    <div class="corner-br"></div>
+
+    <div class="flex justify-between items-start border-b border-cyan-400/30 pb-3">
+      <div>
+        <div class="font-mono text-[11px] text-cyan-400 font-bold uppercase">SECURE CHANNEL</div>
+        <h3 class="font-hud text-xl font-bold text-white">Enquiry Form</h3>
+      </div>
+      <button id="closeEnquiryBtn" class="font-mono text-cyan-400 hover:text-neonpink-400 text-xl font-bold p-1">
+        ✕
+      </button>
+    </div>
+
+    <!-- The Form -->
+    <form class="space-y-4 font-sans text-sm text-slate-300" onsubmit="event.preventDefault(); alert('Enquiry transmitted successfully!'); this.closest('#enquiryModal').classList.add('hidden');">
+      
+      <!-- Company Name -->
+      <div class="space-y-1">
+        <label for="companyName" class="font-mono text-xs text-cyan-400 font-bold uppercase tracking-wider">Company Name</label>
+        <input type="text" id="companyName" required placeholder="Enter your company name" class="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded px-3 py-2 text-white outline-none transition-all">
+      </div>
+      
+      <!-- Company Mail -->
+      <div class="space-y-1">
+        <label for="companyMail" class="font-mono text-xs text-cyan-400 font-bold uppercase tracking-wider">Company Mail</label>
+        <input type="email" id="companyMail" required placeholder="name@company.com" class="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded px-3 py-2 text-white outline-none transition-all">
+      </div>
+
+      <!-- Purpose -->
+      <div class="space-y-1">
+        <label for="purpose" class="font-mono text-xs text-cyan-400 font-bold uppercase tracking-wider">For what purpose will you use my services/info?</label>
+        <textarea id="purpose" rows="4" required placeholder="Describe your project or requirements..." class="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded px-3 py-2 text-white outline-none transition-all resize-none"></textarea>
+      </div>
+      
+      <!-- Submit Button -->
+      <div class="flex justify-end pt-4 border-t border-slate-800">
+        <button type="submit" class="font-mono text-xs font-bold px-5 py-2.5 bg-cyan-400 text-cyberdark rounded hover:bg-cyan-300 transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)] w-full sm:w-auto">
+          TRANSMIT ENQUIRY
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="mt-20 border-t border-cyan-400/20 bg-cyberdark/95 py-6 text-center font-mono text-xs text-slate-500 relative z-10">
+  <div class="max-w-6xl mx-auto px-4 space-y-2">
+    <div>
+      Designed &amp; Developed by <strong class="text-cyan-400">Thaveanesh Kumar T</strong> · Web designer
+    </div>
+    <div class="text-[10px] text-slate-600 uppercase tracking-wider">
+      ARIVUMADHI D R PORTFOLIO &copy; ALL RIGHTS RESERVED.
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* 1. Interactive HTML5 Canvas Background (Space Grid & Particles) */
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+
+  let width, height;
+  let particles = [];
+  let mouse = { x: null, y: null };
+
+  function resizeCanvas() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  window.addEventListener('mousemove', (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+
+  // Particle constructor
+  class Particle {
+    constructor() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      this.vx = (Math.random() - 0.5) * 0.6;
+      this.vy = (Math.random() - 0.5) * 0.6;
+      this.radius = Math.random() * 1.5 + 1;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+
+      if (this.x < 0 || this.x > width) this.vx *= -1;
+      if (this.y < 0 || this.y > height) this.vy *= -1;
+
+      // Mouse reactivity
+      if (mouse.x && mouse.y) {
+        let dx = mouse.x - this.x;
+        let dy = mouse.y - this.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 100) {
+          this.x -= dx * 0.02;
+          this.y -= dy * 0.02;
+        }
+      }
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.6)';
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < 50; i++) {
+    particles.push(new Particle());
+  }
+
+  function drawGrid() {
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.035)';
+    ctx.lineWidth = 1;
+    const gridSize = 40;
+
+    for (let x = 0; x < width; x += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+    for (let y = 0; y < height; y += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+  }
+
+  function animateCanvas() {
+    ctx.clearRect(0, 0, width, height);
+    drawGrid();
+
+    particles.forEach(p => {
+      p.update();
+      p.draw();
+    });
+
+    requestAnimationFrame(animateCanvas);
+  }
+  animateCanvas();
+
+  /* 2. Typewriter Effect for Terminal Box */
+  const sentences = [
+    "building immersive environments...",
+    "balancing game mechanics...",
+    "prototyping new ideas...",
+    "learning through creation..."
+  ];
+  let sIdx = 0, cIdx = 0, isDeleting = false;
+  const typewriterOutput = document.getElementById('typewriterOutput');
+
+  function typeLoop() {
+    if (!typewriterOutput) return;
+    const current = sentences[sIdx];
+
+    if (!isDeleting) {
+      cIdx++;
+      typewriterOutput.textContent = current.slice(0, cIdx);
+      if (cIdx === current.length) {
+        isDeleting = true;
+        setTimeout(typeLoop, 2000);
+        return;
+      }
+    } else {
+      cIdx--;
+      typewriterOutput.textContent = current.slice(0, cIdx);
+      if (cIdx === 0) {
+        isDeleting = false;
+        sIdx = (sIdx + 1) % sentences.length;
+      }
+    }
+    setTimeout(typeLoop, isDeleting ? 30 : 60);
+  }
+  typeLoop();
+
+  /* 3. Mobile Navigation Menu Toggle */
+  const mobileNavBtn = document.getElementById('mobileNavBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  if (mobileNavBtn && mobileMenu) {
+    mobileNavBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+  }
+
+  /* 4. Intersection Observer for Scroll Animations & Skill XP Bar Filling */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+
+        // If it's the skills section, animate skill bars
+        const skillBars = entry.target.querySelectorAll('.skill-bar');
+        skillBars.forEach(bar => {
+          bar.style.width = bar.getAttribute('data-target');
+          bar.style.transition = 'width 1.2s cubic-bezier(0.16, 1, 0.3, 1)';
+        });
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.reveal-section').forEach(sec => {
+    observer.observe(sec);
+  });
+
+  /* 5. Project Quest Modal Logic */
+  const questModal = document.getElementById('questModal');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const closeModalBottomBtn = document.getElementById('closeModalBottomBtn');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalCategory = document.getElementById('modalCategory');
+  const modalDescription = document.getElementById('modalDescription');
+  const modalTechStack = document.getElementById('modalTechStack');
+  const modalPointsList = document.getElementById('modalPointsList');
+
+  document.querySelectorAll('.openModalBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const title = btn.dataset.title;
+      const type = btn.dataset.type;
+      const desc = btn.dataset.desc;
+      const tech = btn.dataset.tech;
+      const points = JSON.parse(btn.dataset.points);
+
+      modalTitle.textContent = title;
+      modalCategory.textContent = type;
+      modalDescription.textContent = desc;
+      modalTechStack.textContent = tech;
+
+      modalPointsList.innerHTML = '';
+      points.forEach(pt => {
+        const li = document.createElement('li');
+        li.textContent = pt;
+        modalPointsList.appendChild(li);
+      });
+
+      questModal.classList.remove('hidden');
+    });
+  });
+
+  function hideQuestModal() {
+    if (questModal) questModal.classList.add('hidden');
+  }
+
+  if (closeModalBtn) closeModalBtn.addEventListener('click', hideQuestModal);
+  if (closeModalBottomBtn) closeModalBottomBtn.addEventListener('click', hideQuestModal);
+  if (questModal) {
+    questModal.addEventListener('click', (e) => {
+      if (e.target === questModal) hideQuestModal();
+    });
+  }
+
+  /* 6. Copy Email to Clipboard */
+  const copyEmail = document.getElementById('copyEmail');
+  const copyBtnTxt = document.getElementById('copyBtnTxt');
+
+  if (copyEmail) {
+    copyEmail.addEventListener('click', () => {
+      const email = 'arivumadhidr@gmail.com';
+      const tempInput = document.createElement('input');
+      tempInput.value = email;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+
+      copyBtnTxt.textContent = 'COPIED!';
+      copyEmail.classList.add('text-neongreen');
+
+      setTimeout(() => {
+        copyBtnTxt.textContent = 'COPY';
+        copyEmail.classList.remove('text-neongreen');
+      }, 2000);
+    });
+  }
+
+  /* 7. Enquiry Form Modal Logic */
+  const enquiryModal = document.getElementById('enquiryModal');
+  const openEnquiryBtn = document.getElementById('openEnquiryBtn');
+  const closeEnquiryBtn = document.getElementById('closeEnquiryBtn');
+
+  if (openEnquiryBtn) {
+    openEnquiryBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      enquiryModal.classList.remove('hidden');
+    });
+  }
+
+  function hideEnquiryModal() {
+    if (enquiryModal) enquiryModal.classList.add('hidden');
+  }
+
+  if (closeEnquiryBtn) closeEnquiryBtn.addEventListener('click', hideEnquiryModal);
+
+  if (enquiryModal) {
+    enquiryModal.addEventListener('click', (e) => {
+      if (e.target === enquiryModal) hideEnquiryModal();
+    });
+  }
+</script>
+
+</body>
+</html>
